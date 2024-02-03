@@ -77,7 +77,7 @@ class DocumentParser:
         Reference: https://www.youtube.com/watch?v=8OJC21T2SL4&t=2882s
         """
 
-    def unstructured_splitter(self):
+    def unstructured_splitter(self): # Convert tables to Markdown/HTML
         """
         `from llama_index.node_parser import UnstructuredElementNodeParser
         from unstructured.partition.pdf import partition_pdf`
