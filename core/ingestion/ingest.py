@@ -32,7 +32,8 @@ class DocumentParser:
         Spliting all documents into individual sentences.
         Nodes contain the surrounding “window” of sentences around each node in the metadata.
         This is most useful for generating embeddings that have a very specific scope. 
-        Then, combined with a MetadataReplacementNodePostProcessor, you can replace the sentence with it’s surrounding context before sending the node to the LLM.
+        Then, combined with a MetadataReplacementNodePostProcessor, you can replace the sentence 
+        with its surrounding context before sending the node to the LLM.
         """
         from llama_index.node_parser import SentenceWindowNodeParser
 
@@ -48,7 +49,9 @@ class DocumentParser:
 
     def semantic_splitter(self, openai_api_key:str):
         """
-        Instead of chunking text with a fixed chunk size, the semantic splitter adaptively picks the breakpoint in-between sentences using embedding similarity. This ensures that a “chunk” contains sentences that are semantically related to each other.
+        Instead of chunking text with a fixed chunk size, the semantic splitter adaptively picks the 
+        breakpoint in-between sentences using embedding similarity. 
+        This ensures that a “chunk” contains sentences that are semantically related to each other.
         https://youtu.be/8OJC21T2SL4?t=1933
         """
         from llama_index.node_parser import SemanticSplitterNodeParser
@@ -61,7 +64,9 @@ class DocumentParser:
 
     def hierarchical_splitter(self):
         """
-        The HierarchicalSplitter is a node parser 
+        The HierarchicalSplitter is a node parser, this will return a hierarchy of nodes in a flat list, 
+        where there will be overlap between parent nodes (e.g. with a bigger chunk size), and child nodes 
+        per parent (e.g. with a smaller chunk size).
         """
         from llama_index.node_parser import HierarchicalNodeParser
 
@@ -70,10 +75,14 @@ class DocumentParser:
                         )
         return self.get_nodes()
     
+    def parent_child_splitter(self):
+        
+        pass
+
     def agentic_splitter(self):
         """
-        The AgenticSplitter is a node parser using LLM do detect the next sentence could relevant to the existed chunk or not.
-        If not, then it will be splitted. Else, it will be combined with the existed chunk.
+        The AgenticSplitter is a node parser using LLM do detect the next sentence could relevant to 
+        the existed chunk or not. If not, then it will be splitted. Else, it will be combined with the existed chunk.
         Reference: https://www.youtube.com/watch?v=8OJC21T2SL4&t=2882s
         """
 
@@ -84,50 +93,49 @@ class DocumentParser:
         Reference: https://youtu.be/8OJC21T2SL4?si=pbiIva_ztjs3z_jV&t=1540
         """
 
+def auto_merging_retrieval(nodes):
+    from llama_index.node_parser import get_leaf_nodes, get_root_nodes
+    leaf_nodes = get_leaf_nodes(nodes)
+    # Load into Storage
+    # define storage context
+    from llama_index.storage.docstore import SimpleDocumentStore
+    from llama_index.storage import StorageContext
+    from llama_index import ServiceContext
+    from llama_index.llms import OpenAI
 
-class NaiveIngest():
-    def __init__(self, local_path:str):
-        self.PERSIST_DIR = local_path
-        self.documents = self.get_documents()
-        self.vector_store = None
-        self.storeage_context = None
-        self.index = None
+    docstore = SimpleDocumentStore()
 
-    def get_documents(self):
-        if os.path.exists(self.PERSIST_DIR):
-            # load the documents and create the index
-            self.documents = SimpleDirectoryReader(self.PERSIST_DIR).load_data()
-        else:
-            print(f"Directory {self.PERSIST_DIR} does not exist")
-        return self.documents
-    
-    def store_documents(self, vectordb_location:str):
-        self.vector_store = QdrantVectorStore(
-            client=QdrantLocal(location=vectordb_location),
-            collection_name="demo_collection",
-            )
-        self.storeage_context = StorageContext().from_defaults(
-            vector_store=self.vector_store
-        )
+    # insert nodes into docstore
+    docstore.add_documents(nodes)
 
-    def vector_store_index(self):
-        ...
+    # define storage context (will include vector store by default too)
+    storage_context = StorageContext.from_defaults(docstore=docstore)
 
-    def create_index(self):
-        self.index = VectorStoreIndex().from_documents(
-            documents=self.documents,
-            storage_context=self.storeage_context,
-        )
-    
-    def create_engine(self):
-        self.query_engine = self.index.as_query_engine(
-            similarity_top_k=3,
-            vector_store_query_mode="default",
-            # filters=MetadataFilters(
-            #     filters=[
-            #         ExactMatchFilter(key="name", value="paul graham"),
-            #     ]
-            # ),
-            alpha=None,
-            doc_ids=None,
-        )
+    service_context = ServiceContext.from_defaults(
+        llm=OpenAI(model="gpt-3.5-turbo")
+    )
+
+
+    ## Load index into vector index
+    from llama_index import VectorStoreIndex
+
+    base_index = VectorStoreIndex(
+        leaf_nodes,
+        storage_context=storage_context,
+        service_context=service_context,
+    )
+
+    # Define Retriever
+    from llama_index.retrievers.auto_merging_retriever import AutoMergingRetriever
+    base_retriever = base_index.as_retriever(similarity_top_k=6)
+    retriever = AutoMergingRetriever(base_retriever, storage_context, verbose=True)
+    # query_str = "What were some lessons learned from red-teaming?"
+    # query_str = "Can you tell me about the key concepts for safety finetuning"
+    query_str = (
+        "What could be the potential outcomes of adjusting the amount of safety"
+        " data used in the RLHF stage?"
+    )
+
+    nodes = retriever.retrieve(query_str)
+    base_nodes = base_retriever.retrieve(query_str)
+
