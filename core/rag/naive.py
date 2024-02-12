@@ -15,7 +15,7 @@ class NaiveRAG():
         self.db_path = db_path
         self.PERSIST_DIR = data_path
         self.collection_name = collection_name
-        self.__openai_key = "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"
+        self.__openai_key = "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"
         
         self.llm = OpenAI(model="gpt-3.5-turbo-1106", temperature=0.0, api_key=self.__openai_key)
         self.embed_model = OpenAIEmbedding(api_key=self.__openai_key)
@@ -73,3 +73,7 @@ class NaiveRAG():
     
     def query(self, query:str):
         return self.query_engine.query(query)
+    
+    def get_prompt(self):
+        return self.query_engine._get_prompts()
+    
