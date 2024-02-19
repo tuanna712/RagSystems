@@ -165,3 +165,4 @@ database/
 data/
 test_advanced.ipynb
 test_eval.ipynb
+database/meta.json
