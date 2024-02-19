@@ -4,6 +4,7 @@ from llama_index import (
     SimpleDirectoryReader,
     StorageContext,
     ServiceContext,
+    PromptTemplate
 )
 from qdrant_client.local.qdrant_local import QdrantLocal
 from llama_index.vector_stores import QdrantVectorStore
@@ -15,7 +16,7 @@ class NaiveRAG():
         self.db_path = db_path
         self.PERSIST_DIR = data_path
         self.collection_name = collection_name
-        self.__openai_key = "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"
+        self.__openai_key = "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"
         
         self.llm = OpenAI(model="gpt-3.5-turbo-1106", temperature=0.0, api_key=self.__openai_key)
         self.embed_model = OpenAIEmbedding(api_key=self.__openai_key)
@@ -56,8 +57,9 @@ class NaiveRAG():
             # ),
             alpha=None,
             doc_ids=None,
-        )
-    
+
+            )
+
     def run_naive(self):
         self.__get_documents()
         self.__store_documents()
@@ -70,10 +72,9 @@ class NaiveRAG():
             service_context=self.service_context,
         )
         self.__create_engine()
+
     
     def query(self, query:str):
         return self.query_engine.query(query)
     
-    def get_prompt(self):
-        return self.query_engine._get_prompts()
     

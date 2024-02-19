@@ -35,7 +35,7 @@ class MyQdrant():
         self.client.upsert(collection_name=collection_name, points=points)
 
     def scroll_data(self, collection_name:str):
-        self.client.scroll(collection_name)
+        return self.client.scroll(collection_name)
     
     def search_data(self, collection_name:str, query_vector:list, top_k:int=10):
-        self.client.search(collection_name, query_vector, limit=top_k)
+        return self.client.search(collection_name, query_vector, limit=top_k)
