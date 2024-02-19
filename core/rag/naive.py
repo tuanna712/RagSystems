@@ -1,4 +1,4 @@
-import os.path
+import os.path, os
 from llama_index import (
     VectorStoreIndex,
     SimpleDirectoryReader,
@@ -10,13 +10,15 @@ from qdrant_client.local.qdrant_local import QdrantLocal
 from llama_index.vector_stores import QdrantVectorStore
 from llama_index.llms import OpenAI
 from llama_index.embeddings import OpenAIEmbedding
+from dotenv import load_dotenv
+load_dotenv()
 
 class NaiveRAG():
     def __init__(self, data_path:str,  db_path:str, collection_name:str='demo_collection'):
         self.db_path = db_path
         self.PERSIST_DIR = data_path
         self.collection_name = collection_name
-        self.__openai_key = "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"
+        self.__openai_key = os.environ["OPENAI_API_KEY"]
         
         self.llm = OpenAI(model="gpt-3.5-turbo-1106", temperature=0.0, api_key=self.__openai_key)
         self.embed_model = OpenAIEmbedding(api_key=self.__openai_key)
