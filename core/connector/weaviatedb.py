@@ -11,13 +11,17 @@ from weaviate.classes.config import (
 )
 
 class ClientWeaviate:
-    def __init__(self, URL, API_KEY):
+    def __init__(self, URL:str="", API_KEY:str="", mode:str="cloud"):
         # Connect to a WCS instance
-        self.client = weaviate.connect_to_wcs(
-            cluster_url=URL,
-            auth_credentials=weaviate.auth.AuthApiKey(API_KEY),
-            skip_init_checks=True,
-            )
+        if mode == "cloud":
+            self.client = weaviate.connect_to_wcs(
+                cluster_url=URL,
+                auth_credentials=weaviate.auth.AuthApiKey(API_KEY),
+                skip_init_checks=True,
+                )
+        if mode == "local":
+            self.client = weaviate.connect_to_local()
+            
     def get_schema(self): # List all collections
         return self.client.collections.list_all(simple=False)
     
@@ -80,8 +84,8 @@ class ClientWeaviate:
         )
         
 class WVCollection(ClientWeaviate):
-    def __init__(self, URL, API_KEY, collection_name):
-        super().__init__(URL, API_KEY)
+    def __init__(self, URL:str="", API_KEY:str="", collection_name:str="demo_collection", mode:str="cloud"):
+        super().__init__(URL, API_KEY, mode)
         self.collection_name = collection_name
         if self.client.collections.exists(self.collection_name):
             self.collection = self.client.collections.get(self.collection_name)
