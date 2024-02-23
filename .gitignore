@@ -160,9 +160,10 @@ cython_debug/
 #.idea/
 
 .DS_Store
-test.ipynb
-database/
 data/
-test_advanced.ipynb
-test_eval.ipynb
+database/
 database/meta.json
+test.ipynb
+test_eval.ipynb
+test_advanced.ipynb
+test_weaviate.ipynb
