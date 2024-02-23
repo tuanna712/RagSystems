@@ -31,3 +31,12 @@ class MyOAI():
             model="text-embedding-ada-002"
         )
         return response.data[0].embedding
+    
+#==============================================================================
+import tiktoken
+encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+def token_count(string: str, encoding_name: str="cl100k_base") -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
